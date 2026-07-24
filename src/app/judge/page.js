@@ -31,14 +31,15 @@ export default function JudgeConsole() {
   const [timeSec, setTimeSec] = useState(0);
   const [disqualified, setDisqualified] = useState(false);
 
-  // Drag and drop state
-  const [draggedId, setDraggedId] = useState(null);
+  // Scoring wizard step: 0 таймер, 1 этап 1, 2 этап 2, 3 штрафы и время, 4 итоги
+  const [wizardStep, setWizardStep] = useState(0);
 
   // In-line UI confirmations
   const [confirmResetTimer, setConfirmResetTimer] = useState(false);
   const [confirmSwitchAlliance, setConfirmSwitchAlliance] = useState(false);
   const [confirmResetDb, setConfirmResetDb] = useState(false);
   const [confirmDisqualify, setConfirmDisqualify] = useState(false);
+  const [confirmDeleteResult, setConfirmDeleteResult] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
 
   // Status message
@@ -138,26 +139,39 @@ export default function JudgeConsole() {
     setConfirmSwitchAlliance(false);
   };
 
-  const fetchData = async (codeToCheck = passcode, allianceToCheck = selectedAlliance) => {
+  const syncTeamTimer = (json, allianceId, teamId) => {
+    if (!allianceId || !teamId) return;
+
+    const run = json.teamRuns?.[allianceId]?.[teamId];
+    if (!run) {
+      setIsTimerRunning(false);
+      setElapsed(0);
+      return;
+    }
+
+    if (run.isRunning && run.startTime) {
+      const start = new Date(run.startTime).getTime();
+      const base = run.elapsedSeconds || 0;
+      setIsTimerRunning(true);
+      setElapsed(base + Math.floor((Date.now() - start) / 1000));
+    } else {
+      setIsTimerRunning(false);
+      setElapsed(run.elapsedSeconds || 0);
+    }
+  };
+
+  const fetchData = async (
+    codeToCheck = passcode,
+    allianceToCheck = selectedAlliance,
+    teamToCheck = selectedTeamId
+  ) => {
     try {
       const res = await fetch('/api/score');
       if (res.ok) {
         const json = await res.json();
         setData(json);
         
-        // If an alliance is selected, sync the stopwatch
-        if (allianceToCheck && json.activeRuns?.[allianceToCheck]) {
-          const run = json.activeRuns[allianceToCheck];
-          if (run.isRunning) {
-            setIsTimerRunning(true);
-            const start = new Date(run.startTime).getTime();
-            const base = run.elapsedSeconds || 0;
-            setElapsed(base + Math.floor((Date.now() - start) / 1000));
-          } else {
-            setIsTimerRunning(false);
-            setElapsed(run.elapsedSeconds || 0);
-          }
-        }
+        syncTeamTimer(json, allianceToCheck, teamToCheck);
       }
     } catch (err) {
       console.error('Ошибка загрузки данных:', err);
@@ -174,6 +188,12 @@ export default function JudgeConsole() {
     
     return () => clearInterval(interval);
   }, [isAuthenticated, selectedAlliance]);
+
+  useEffect(() => {
+    if (data && selectedAlliance && selectedTeamId) {
+      syncTeamTimer(data, selectedAlliance, selectedTeamId);
+    }
+  }, [selectedTeamId]);
 
   // Local timer ticking
   useEffect(() => {
@@ -239,16 +259,6 @@ export default function JudgeConsole() {
     }
   };
 
-  // Auto select first team of selected alliance on load
-  useEffect(() => {
-    if (data && selectedAlliance) {
-      const teams = data.alliances[selectedAlliance].teams;
-      if (teams.length > 0 && !selectedTeamId) {
-        setSelectedTeamId(teams[0].id);
-      }
-    }
-  }, [selectedAlliance, data]);
-
   // Load team data into form when selected team changes
   useEffect(() => {
     if (!data || !selectedTeamId) return;
@@ -282,6 +292,8 @@ export default function JudgeConsole() {
     setTimeSec(sec);
 
     setConfirmDisqualify(false);
+    setConfirmDeleteResult(false);
+    setWizardStep(0);
   }, [selectedTeamId]);
 
   const showStatus = (text, type) => {
@@ -376,6 +388,39 @@ export default function JudgeConsole() {
     }
   };
 
+  const handleDeleteResult = async () => {
+    if (!selectedTeamId) return;
+
+    try {
+      const res = await fetch('/api/score', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${passcode}`
+        },
+        body: JSON.stringify({
+          action: 'clearTeamResult',
+          allianceId: selectedAlliance,
+          teamId: selectedTeamId
+        })
+      });
+
+      const json = await res.json();
+      if (res.ok) {
+        setIsTimerRunning(false);
+        setElapsed(0);
+        setConfirmDeleteResult(false);
+        setSelectedTeamId('');
+        showStatus('Результат команды удалён', 'success');
+        await fetchData();
+      } else {
+        showStatus(json.error || 'Ошибка удаления результата', 'error');
+      }
+    } catch (err) {
+      showStatus('Ошибка подключения: ' + err.message, 'error');
+    }
+  };
+
   // Active Timer API Controls
   const handleStartTimer = async () => {
     if (!selectedTeamId) return;
@@ -384,7 +429,7 @@ export default function JudgeConsole() {
       teamId: selectedTeamId,
       startTime: new Date().toISOString(),
       isRunning: true,
-      elapsedSeconds: 0
+      elapsedSeconds: elapsed
     };
 
     try {
@@ -397,14 +442,16 @@ export default function JudgeConsole() {
         body: JSON.stringify({
           action: 'updateActiveRun',
           allianceId: selectedAlliance,
+          teamId: selectedTeamId,
           activeRun: newActiveRun
         })
       });
 
       if (res.ok) {
         setIsTimerRunning(true);
-        setElapsed(0);
-        showStatus('Таймер запущен на дашборде!', 'success');
+        showStatus(elapsed > 0 ? 'Таймер заезда продолжен!' : 'Таймер заезда запущен!', 'success');
+        // Автопереход к первому этапу после старта заезда
+        setWizardStep(1);
       } else {
         const json = await res.json();
         showStatus(json.error || 'Ошибка запуска таймера', 'error');
@@ -432,6 +479,7 @@ export default function JudgeConsole() {
         body: JSON.stringify({
           action: 'updateActiveRun',
           allianceId: selectedAlliance,
+          teamId: selectedTeamId,
           activeRun: newActiveRun
         })
       });
@@ -463,6 +511,7 @@ export default function JudgeConsole() {
         body: JSON.stringify({
           action: 'updateActiveRun',
           allianceId: selectedAlliance,
+          teamId: selectedTeamId,
           activeRun: newActiveRun
         })
       });
@@ -485,6 +534,17 @@ export default function JudgeConsole() {
     setTimeMin(mins);
     setTimeSec(secs);
     showStatus('Время скопировано в форму!', 'success');
+  };
+
+  // Переход «далее» по мастеру: после заполнения последнего этапа (Этап 2)
+  // останавливаем таймер и переносим его показания в поля времени (дальше их можно править вручную)
+  const handleWizardNext = () => {
+    if (wizardStep === 2 && isTimerRunning) {
+      handlePauseTimer();
+      setTimeMin(Math.floor(elapsed / 60));
+      setTimeSec(elapsed % 60);
+    }
+    setWizardStep(s => Math.min(4, s + 1));
   };
 
   const handleResetDatabase = async () => {
@@ -573,6 +633,12 @@ export default function JudgeConsole() {
     );
   }
 
+  // Производные данные выбранного альянса (доступны всем экранам ниже)
+  const teams = data && selectedAlliance ? data.alliances[selectedAlliance].teams : [];
+  const polyNum = selectedAlliance === 'A' ? '1' : selectedAlliance === 'B' ? '2' : '3';
+  const allianceColor = selectedAlliance === 'A' ? 'var(--alliance-a)' : selectedAlliance === 'B' ? 'var(--alliance-b)' : 'var(--alliance-c)';
+  const allianceName = selectedAlliance === 'A' ? 'Мега-Альянс А' : selectedAlliance === 'B' ? 'Мега-Альянс B' : 'Мега-Альянс C';
+
   // ========================================================
   // VIEW 2: Polygon Isolation Choice
   // ========================================================
@@ -647,13 +713,96 @@ export default function JudgeConsole() {
   }
 
   // ========================================================
-  // VIEW 3: Main Active Judge Console
+  // VIEW 3: Team Selection within chosen alliance
   // ========================================================
-  const teams = data ? data.alliances[selectedAlliance].teams : [];
+  if (!selectedTeamId) {
+    return (
+      <div className="auth-wall-container" style={{ alignItems: 'flex-start', overflowY: 'auto', padding: '24px 0' }}>
+        <div className="auth-card" style={{ maxWidth: '480px', textAlign: 'left' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
+              Выберите команду
+            </h2>
+            <span className="score-badge-inline" style={{ background: 'var(--bg-canvas)', color: allianceColor, fontWeight: '800', border: `1px solid ${allianceColor}` }}>
+              {allianceName}
+            </span>
+          </div>
+          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '20px' }}>
+            Полигон {polyNum} · Порядок заездов меняется стрелками ▲/▼
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {teams.map((t, idx) => (
+              <div
+                key={t.id}
+                onClick={() => setSelectedTeamId(t.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '14px 16px',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  background: 'var(--bg-panel)',
+                  boxShadow: 'var(--shadow-card)'
+                }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }} onClick={e => e.stopPropagation()}>
+                  <button
+                    disabled={idx === 0}
+                    style={{ border: 'none', background: 'none', cursor: idx === 0 ? 'not-allowed' : 'pointer', padding: '2px', fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1' }}
+                    onClick={() => moveTeam(t.id, idx - 1)}
+                  >
+                    ▲
+                  </button>
+                  <button
+                    disabled={idx === teams.length - 1}
+                    style={{ border: 'none', background: 'none', cursor: idx === teams.length - 1 ? 'not-allowed' : 'pointer', padding: '2px', fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1' }}
+                    onClick={() => moveTeam(t.id, idx + 1)}
+                  >
+                    ▼
+                  </button>
+                </div>
+                <div style={{ flexGrow: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: '700', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: t.disqualified ? 'line-through' : 'none' }}>
+                    {t.name} {t.disqualified && <span style={{ color: '#ff3b30', fontWeight: '900', fontSize: '9px' }}>[ДИСКВ.]</span>}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                    Ровер #{t.rover} | GFS-X #{t.gfsx}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontWeight: '800', color: t.disqualified ? '#ff3b30' : 'var(--text-primary)' }}>
+                    {t.disqualified ? '0' : t.score} б.
+                  </div>
+                  <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>судить →</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="toolbar-divider" style={{ width: '100%', margin: '20px 0', height: '1px' }}></div>
+
+          <button
+            className="figma-btn w-full"
+            style={{ height: '42px', fontWeight: 'bold' }}
+            onClick={() => {
+              setSelectedAlliance('');
+              localStorage.removeItem('yacamp_judge_alliance');
+            }}
+          >
+            🔄 Сменить полигон
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ========================================================
+  // VIEW 4: Main Active Judge Console
+  // ========================================================
   const currentTeam = selectedTeamId ? findTeamById(selectedTeamId) : null;
-  const polyNum = selectedAlliance === 'A' ? '1' : selectedAlliance === 'B' ? '2' : '3';
-  const allianceColor = selectedAlliance === 'A' ? 'var(--alliance-a)' : selectedAlliance === 'B' ? 'var(--alliance-b)' : 'var(--alliance-c)';
-  const allianceName = selectedAlliance === 'A' ? 'Мега-Альянс А' : selectedAlliance === 'B' ? 'Мега-Альянс B' : 'Мега-Альянс C';
 
   return (
     <div className="figma-app">
@@ -671,6 +820,10 @@ export default function JudgeConsole() {
         </div>
 
         <div className="toolbar-right" style={{ gap: '10px' }}>
+          <button className="figma-btn" onClick={() => setSelectedTeamId('')} style={{ fontWeight: 'bold' }}>
+            👥 Команды
+          </button>
+
           <a href="/" className="figma-btn" style={{ fontWeight: 'bold' }}>
             📊 На дашборд
           </a>
@@ -715,82 +868,12 @@ export default function JudgeConsole() {
         </div>
       </header>
 
-      {/* Main Workspace split */}
+      {/* Main Workspace — wizard only (команды выбираются на отдельном экране) */}
       <div className="figma-workspace">
-        
-        {/* Left Sidebar: Select & Reorder teams (Touch arrows & desktop drag-and-drop) */}
-        <aside className="figma-sidebar left">
-          <div className="sidebar-header" style={{ display: 'flex', flexDirection: 'column', height: 'auto', padding: '12px 20px', gap: '4px' }}>
-            <span>Команды на Полигоне {polyNum}</span>
-            <span style={{ fontSize: '9px', fontWeight: 'normal', color: 'var(--text-secondary)', textTransform: 'none' }}>
-              Зажмите для перетаскивания (или используйте ▲/▼)
-            </span>
-          </div>
-          <div className="sidebar-content">
-            {teams.map((t, idx) => (
-              <div 
-                key={t.id}
-                className={`tree-item ${selectedTeamId === t.id ? 'active' : ''}`}
-                style={{ 
-                  cursor: 'grab', 
-                  opacity: draggedId === t.id ? 0.4 : 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-                draggable="true"
-                onDragStart={(e) => {
-                  setDraggedId(t.id);
-                  e.dataTransfer.effectAllowed = 'move';
-                }}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  if (draggedId && draggedId !== t.id) {
-                    moveTeam(draggedId, idx);
-                  }
-                }}
-                onDragEnd={() => setDraggedId(null)}
-                onClick={() => setSelectedTeamId(t.id)}
-              >
-                {/* Tactical Reorder arrows (Up/Down) */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginRight: '6px' }} onClick={e => e.stopPropagation()}>
-                  <button 
-                    disabled={idx === 0} 
-                    style={{ border: 'none', background: 'none', cursor: idx === 0 ? 'not-allowed' : 'pointer', padding: '2px', fontSize: '10px', color: 'var(--text-secondary)', lineHeight: '1' }}
-                    onClick={() => moveTeam(t.id, idx - 1)}
-                  >
-                    ▲
-                  </button>
-                  <button 
-                    disabled={idx === teams.length - 1} 
-                    style={{ border: 'none', background: 'none', cursor: idx === teams.length - 1 ? 'not-allowed' : 'pointer', padding: '2px', fontSize: '10px', color: 'var(--text-secondary)', lineHeight: '1' }}
-                    onClick={() => moveTeam(t.id, idx + 1)}
-                  >
-                    ▼
-                  </button>
-                </div>
-
-                <div className="tree-item-icon">🤖</div>
-                <div className="tree-item-meta" style={{ minWidth: 0 }}>
-                  <span className="tree-item-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: t.disqualified ? 'line-through' : 'none' }}>
-                    {t.name} {t.disqualified && <span style={{ color: '#ff3b30', fontWeight: '900', fontSize: '9px' }}>[ДИСКВ.]</span>}
-                  </span>
-                  <span className="tree-item-details">р: #{t.rover} | г: #{t.gfsx}</span>
-                </div>
-                <span className="tree-item-score" style={{ color: t.disqualified ? '#ff3b30' : 'var(--text-primary)' }}>
-                  {t.disqualified ? '0' : t.score} б.
-                </span>
-              </div>
-            ))}
-          </div>
-        </aside>
 
         {/* Center Canvas: Big mobile-friendly scoring elements */}
-        <main className="flex-1 flex flex-col min-w-0 relative h-screen">
-          <div className="flex-1 overflow-y-auto bg-background bg-notebook relative p-4 md:p-8 z-0 pb-32">
+        <main className="flex-1 flex flex-col min-w-0 relative">
+          <div className="flex-1 overflow-y-auto bg-notebook relative p-4 md:p-8 z-0 pb-32">
             <div className="organic-blob w-[300px] h-[300px] top-[-80px] right-[-80px]"></div>
             
             <div className="relative z-10 max-w-2xl mx-auto flex flex-col gap-6" style={{ paddingBottom: '140px' }}>
@@ -834,7 +917,49 @@ export default function JudgeConsole() {
                     </div>
                   </div>
 
+                  {!confirmDeleteResult ? (
+                    <button
+                      type="button"
+                      className="figma-btn danger"
+                      onClick={() => setConfirmDeleteResult(true)}
+                      style={{ alignSelf: 'flex-start', fontWeight: 'bold' }}
+                    >
+                      🗑 Удалить результат команды
+                    </button>
+                  ) : (
+                    <div className="flex-row" style={{ alignSelf: 'flex-start' }}>
+                      <button
+                        type="button"
+                        className="figma-btn danger"
+                        onClick={handleDeleteResult}
+                        style={{ fontWeight: 'bold' }}
+                      >
+                        ✔ Удалить результат?
+                      </button>
+                      <button
+                        type="button"
+                        className="figma-btn"
+                        onClick={() => setConfirmDeleteResult(false)}
+                      >
+                        ✕ Отмена
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Wizard stepper */}
+                  <div className="wizard-stepper">
+                    <span>
+                      Шаг {wizardStep + 1} из 5 · {['Таймер заезда', 'Этап 1: Ровер', 'Этап 2: GFS-X', 'Штрафы и время', 'Итоги'][wizardStep]}
+                    </span>
+                    <div className="wizard-dots">
+                      {[0, 1, 2, 3, 4].map(i => (
+                        <span key={i} className={`wizard-dot ${i === wizardStep ? 'current' : i < wizardStep ? 'done' : ''}`}></span>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* ⏱ SECTION: High-Contrast Phone-optimized Stopwatch */}
+                  {wizardStep === 0 && (
                   <div className="stitch-card" style={{ border: '1px solid var(--border-default)', background: '#ffffff', boxShadow: 'var(--shadow-active)' }}>
                     <div style={{ display: 'flex', justifyWindow: 'space-between', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                       <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
@@ -907,11 +1032,13 @@ export default function JudgeConsole() {
                       ⏱ Скопировать показания секундомера в форму
                     </button>
                   </div>
+                  )}
 
                   {/* 📝 FORM SHEET */}
-                  <form onSubmit={handleSaveScore} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <form id="judge-score-form" onSubmit={handleSaveScore} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     
                     {/* STAGE 1 CARD */}
+                    {wizardStep === 1 && (
                     <div className="stitch-card">
                       <div className="flex-between" style={{ borderBottom: '1px solid var(--border-default)', paddingBottom: '8px', marginBottom: '16px' }}>
                         <h3 style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
@@ -991,8 +1118,10 @@ export default function JudgeConsole() {
                         </>
                       )}
                     </div>
+                    )}
 
                     {/* STAGE 2 CARD */}
+                    {wizardStep === 2 && (
                     <div className="stitch-card">
                       <div className="flex-between" style={{ borderBottom: '1px solid var(--border-default)', paddingBottom: '8px', marginBottom: '16px' }}>
                         <h3 style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
@@ -1203,7 +1332,11 @@ export default function JudgeConsole() {
                         </>
                       )}
                     </div>
+                    )}
 
+                    {/* STEP 3: штрафы, время, дисквалификация */}
+                    {wizardStep === 3 && (
+                    <>
                     {/* GENERAL PENALTIES CARD */}
                     <div className="stitch-card">
                       <h3 style={{ fontSize: '13px', fontWeight: '800', marginBottom: '16px', borderBottom: '1px solid var(--border-default)', paddingBottom: '8px', color: '#ff3b30' }}>
@@ -1320,16 +1453,108 @@ export default function JudgeConsole() {
                       )}
                     </div>
 
-                    {/* Save Button */}
-                    <button 
-                      type="submit" 
-                      className="figma-btn primary"
-                      style={{ height: '54px', fontSize: '14px', fontWeight: 'bold', borderRadius: '14px', width: '100%', boxShadow: '0 4px 12px rgba(1, 58, 114, 0.2)' }}
-                    >
-                      💾 Сохранить ведомость команды
-                    </button>
+                    </>
+                    )}
+
+                    {/* STEP 4: итоговая сводка по всем этапам */}
+                    {wizardStep === 4 && (
+                    <div className="stitch-card">
+                      <h3 style={{ fontSize: '13px', fontWeight: '800', marginBottom: '16px', borderBottom: '1px solid var(--border-default)', paddingBottom: '8px', color: 'var(--text-primary)' }}>
+                        Итоги заезда — проверьте перед сохранением
+                      </h3>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div className="wizard-summary-row">
+                          <span>Этап 1 · Поиск мяча</span>
+                          <span className="points">
+                            {stage1Skipped ? 'пропущен' : ({ failed: 'Не найден (0)', foxglove: 'в Foxglove (+5)', autonomous: 'Автономно (+10)' })[findBall]}
+                          </span>
+                        </div>
+                        <div className="wizard-summary-row">
+                          <span>Этап 1 · M2M активация</span>
+                          <span className="points">
+                            {stage1Skipped ? 'пропущен' : (activation === 'success' ? 'Автоматически (+10)' : 'Вручную (0)')}
+                          </span>
+                        </div>
+                        <div className="wizard-summary-row">
+                          <span>Этап 2 · Автономное движение</span>
+                          <span className="points">{stage2Skipped ? 'пропущен' : (stage2Autonomous ? '+20' : '0')}</span>
+                        </div>
+                        <div className="wizard-summary-row">
+                          <span>Этап 2 · Въезд в зону{!stage2Skipped && enteredZone && collisions1 > 0 ? ` (−${collisions1 * 3} столкнов.)` : ''}</span>
+                          <span className="points">{stage2Skipped ? 'пропущен' : (enteredZone ? `+${Math.max(0, 15 - collisions1 * 3)}` : '0')}</span>
+                        </div>
+                        <div className="wizard-summary-row">
+                          <span>Этап 2 · Захват мяча клешнёй</span>
+                          <span className="points">{stage2Skipped ? 'пропущен' : (gfsxCatch ? '+20' : '0')}</span>
+                        </div>
+                        <div className="wizard-summary-row">
+                          <span>Этап 2 · Возврат на старт{!stage2Skipped && returnToStart && collisions2 > 0 ? ` (−${collisions2 * 3} столкнов.)` : ''}</span>
+                          <span className="points">{stage2Skipped ? 'пропущен' : (returnToStart ? `+${Math.max(0, 15 - collisions2 * 3)}` : '0')}</span>
+                        </div>
+                        <div className="wizard-summary-row">
+                          <span>Этап 2 · Доставка мяча на финиш</span>
+                          <span className="points">{stage2Skipped ? 'пропущен' : (returnWithBall ? '+15' : '0')}</span>
+                        </div>
+                        <div className="wizard-summary-row">
+                          <span>Штрафы · Перенос робота ×{resets}</span>
+                          <span className="points minus">{resets > 0 ? `−${resets * 15}` : '0'}</span>
+                        </div>
+                        <div className="wizard-summary-row">
+                          <span>Время трассы</span>
+                          <span className="points">
+                            {String(timeMin).padStart(2, '0')}:{String(timeSec).padStart(2, '0')}
+                            {(stage1Skipped || stage2Skipped) ? ` (+${(stage1Skipped ? 5 : 0) + (stage2Skipped ? 5 : 0)} мин пропусков)` : ''}
+                          </span>
+                        </div>
+                        {disqualified && (
+                          <div className="wizard-summary-row" style={{ borderColor: '#f23c27', background: 'rgba(242,60,39,0.05)' }}>
+                            <span style={{ color: '#f23c27', fontWeight: 'bold' }}>🚫 Команда дисквалифицирована</span>
+                            <span className="points minus">0 б.</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border-default)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: '700', color: 'var(--text-secondary)', fontSize: '12px', textTransform: 'uppercase' }}>Итоговый счёт</span>
+                        <span style={{ fontSize: '28px', fontWeight: '900', color: allianceColor }}>
+                          {calculateLiveScore()} <span style={{ fontSize: '13px', fontWeight: 'normal', color: 'var(--text-secondary)' }}>/ 105</span>
+                        </span>
+                      </div>
+                    </div>
+                    )}
 
                   </form>
+
+                  {/* Fixed wizard navigation (назад / далее / сохранить) */}
+                  <div className="wizard-nav">
+                    <button
+                      type="button"
+                      className="figma-btn"
+                      disabled={wizardStep === 0}
+                      onClick={() => setWizardStep(s => Math.max(0, s - 1))}
+                    >
+                      ← назад
+                    </button>
+                    {wizardStep < 4 ? (
+                      <button
+                        type="button"
+                        className="figma-btn primary"
+                        onClick={handleWizardNext}
+                      >
+                        далее →
+                      </button>
+                    ) : (
+                      <button
+                        type="submit"
+                        form="judge-score-form"
+                        className="figma-btn primary"
+                        style={{ boxShadow: '0 4px 12px rgba(1, 58, 114, 0.2)' }}
+                      >
+                        💾 сохранить ведомость
+                      </button>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div className="stitch-card text-center" style={{ padding: '40px 20px' }}>

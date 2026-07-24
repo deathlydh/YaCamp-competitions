@@ -10,48 +10,54 @@
           "name": "AnyMan",
           "rover": "17",
           "gfsx": "156",
-          "score": 0,
+          "score": 55,
           "timeSeconds": 0,
           "stage1": {
-            "findBall": "failed",
-            "activation": "manual"
+            "findBall": "autonomous",
+            "activation": "success",
+            "skipped": false
           },
           "stage2": {
-            "autonomous": false,
-            "enteredZone": false,
+            "autonomous": true,
+            "enteredZone": true,
             "collisions1": 0,
             "catch": false,
             "returnToStart": false,
             "collisions2": 0,
-            "returnWithBall": false
+            "returnWithBall": false,
+            "skipped": false
           },
           "penalties": {
             "resets": 0
-          }
+          },
+          "disqualified": false
         },
         {
           "id": "a3",
           "name": "Груз 67",
           "rover": "17",
           "gfsx": "158",
-          "score": 0,
-          "timeSeconds": 0,
+          "score": 55,
+          "timeSeconds": 600,
           "stage1": {
-            "findBall": "failed",
-            "activation": "manual"
+            "findBall": "autonomous",
+            "activation": "success",
+            "skipped": false
           },
           "stage2": {
-            "autonomous": false,
-            "enteredZone": false,
+            "autonomous": true,
+            "enteredZone": true,
             "collisions1": 0,
             "catch": false,
             "returnToStart": false,
             "collisions2": 0,
-            "returnWithBall": false
+            "returnWithBall": false,
+            "skipped": false
           },
           "penalties": {
             "resets": 0
-          }
+          },
+          "disqualified": false
         },
         {
           "id": "a2",
@@ -456,10 +462,10 @@
   },
   "activeRuns": {
     "A": {
-      "teamId": null,
+      "teamId": "a3",
       "startTime": null,
       "isRunning": false,
-      "elapsedSeconds": 0
+      "elapsedSeconds": 1284
     },
     "B": {
       "teamId": null,

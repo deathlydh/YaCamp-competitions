@@ -119,7 +119,11 @@ body {
 html, body {
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
+}
+
+/* overflow-x: clip (не hidden) — не создаёт скролл-контейнер и не ломает position: fixed */
+html {
+  overflow-x: clip;
 }
 
 /* Material Symbols Icon config */
@@ -779,7 +783,7 @@ select.figma-input {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  width: 100vw;
+  width: 100%;
   background-color: var(--bg-canvas);
   position: relative;
   z-index: 10;
@@ -958,6 +962,8 @@ select.figma-input {
     box-shadow: 0 -4px 16px rgba(1, 58, 114, 0.06);
     padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
     gap: 4px;
+    transform: translateZ(0);
+    will-change: transform;
   }
 
   .mobile-tab {
@@ -995,6 +1001,86 @@ select.figma-input {
   .sidebar-nav-only {
     display: none;
   }
+}
+
+/* Judge scoring wizard */
+.wizard-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.wizard-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.wizard-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--border-default);
+  transition: all 0.15s ease-in-out;
+}
+
+.wizard-dot.done {
+  background-color: #0acf83;
+}
+
+.wizard-dot.current {
+  background-color: var(--text-primary);
+  transform: scale(1.25);
+}
+
+.wizard-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  display: flex;
+  gap: 10px;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  background-color: var(--bg-panel);
+  border-top: 1px solid var(--border-default);
+  box-shadow: 0 -4px 16px rgba(1, 58, 114, 0.06);
+  transform: translateZ(0);
+}
+
+.wizard-nav .figma-btn {
+  flex: 1;
+  height: 48px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 12px;
+}
+
+.wizard-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background-color: var(--bg-canvas);
+  font-size: 12px;
+}
+
+.wizard-summary-row .points {
+  font-weight: 800;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.wizard-summary-row .points.minus {
+  color: #f23c27;
 }
 
 /* Utilities */
