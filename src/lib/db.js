@@ -51,8 +51,8 @@ const INITIAL_STATE = {
   }
 };
 
-const KV_URL = process.env.KV_REST_API_URL;
-const KV_TOKEN = process.env.KV_REST_API_TOKEN;
+const KV_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+const KV_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 
 // Local JSON file path. On Vercel, /tmp is writable but ephemeral.
 // Locally, we write directly to the project root directory.
