@@ -366,7 +366,7 @@ export default function AdminConsole() {
       <div className="figma-workspace">
         
         {/* Left Side: Summary Roster Viewer with Drag-and-Drop / Arrow ordering support */}
-        <aside className="figma-sidebar left" style={{ width: '340px' }}>
+        <aside className="figma-sidebar left wide">
           <div className="sidebar-header" style={{ display: 'flex', flexDirection: 'column', height: 'auto', padding: '12px 20px', gap: '4px' }}>
             <span>Состав команд в базе</span>
             <span style={{ fontSize: '9px', fontWeight: 'normal', color: 'var(--text-secondary)', textTransform: 'none' }}>
