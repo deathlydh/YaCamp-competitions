@@ -50,6 +50,9 @@ export default function JudgeConsole() {
   const [elapsed, setElapsed] = useState(0);
   const timerIntervalRef = useRef(null);
 
+  // Секундный тик — чтобы живые таймеры на карточках команд обновлялись
+  const [now, setNow] = useState(0);
+
   // Auth check on mount
   useEffect(() => {
     const saved = localStorage.getItem('yacamp_passcode');
@@ -208,6 +211,12 @@ export default function JudgeConsole() {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     };
   }, [isTimerRunning]);
+
+  // Tick every second so live timers on team cards stay fresh
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const findTeamById = (id) => {
     if (!data) return null;
@@ -577,6 +586,31 @@ export default function JudgeConsole() {
     return `${mins}:${secs}`;
   };
 
+  // Живой таймер команды: возвращает { seconds, isRunning } или null, если заезда не было.
+  // Источники по приоритету: teamRuns (по команде) → activeRuns (текущий заезд альянса) → сохранённый timeSeconds.
+  const getTeamLiveTimer = (teamId) => {
+    const run = data?.teamRuns?.[selectedAlliance]?.[teamId]
+      || (data?.activeRuns?.[selectedAlliance]?.teamId === teamId ? data.activeRuns[selectedAlliance] : null);
+
+    if (run) {
+      if (run.isRunning && run.startTime) {
+        const start = new Date(run.startTime).getTime();
+        // now === 0 до первого тика интервала — показываем накопленную базу без прироста
+        const effectiveNow = now || start;
+        return { seconds: (run.elapsedSeconds || 0) + Math.floor((effectiveNow - start) / 1000), isRunning: true };
+      }
+      if (run.elapsedSeconds > 0) {
+        return { seconds: run.elapsedSeconds, isRunning: false };
+      }
+    }
+
+    const team = data?.alliances?.[selectedAlliance]?.teams.find(t => t.id === teamId);
+    if (team?.timeSeconds > 0) {
+      return { seconds: team.timeSeconds, isRunning: false };
+    }
+    return null;
+  };
+
   // ========================================================
   // VIEW 1: Login Gate Screen
   // ========================================================
@@ -732,7 +766,9 @@ export default function JudgeConsole() {
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {teams.map((t, idx) => (
+            {teams.map((t, idx) => {
+              const liveTimer = getTeamLiveTimer(t.id);
+              return (
               <div
                 key={t.id}
                 onClick={() => setSelectedTeamId(t.id)}
@@ -741,7 +777,7 @@ export default function JudgeConsole() {
                   alignItems: 'center',
                   gap: '10px',
                   padding: '14px 16px',
-                  border: '1px solid var(--border-default)',
+                  border: `1px solid ${liveTimer?.isRunning ? '#0acf83' : 'var(--border-default)'}`,
                   borderRadius: '12px',
                   cursor: 'pointer',
                   background: 'var(--bg-panel)',
@@ -772,6 +808,23 @@ export default function JudgeConsole() {
                     Ровер #{t.rover} | GFS-X #{t.gfsx}
                   </div>
                 </div>
+                {liveTimer && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    flexShrink: 0,
+                    padding: '4px 10px',
+                    borderRadius: '8px',
+                    background: liveTimer.isRunning ? 'rgba(10,207,131,0.1)' : 'var(--bg-canvas)',
+                    border: `1px solid ${liveTimer.isRunning ? '#0acf83' : 'var(--border-default)'}`
+                  }}>
+                    {liveTimer.isRunning && <span className="pulse-indicator"></span>}
+                    <span className="stopwatch-time" style={{ fontSize: '15px', fontWeight: '800', color: liveTimer.isRunning ? '#0acf83' : 'var(--text-primary)' }}>
+                      {formatTimerDisplay(liveTimer.seconds)}
+                    </span>
+                  </div>
+                )}
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   <div style={{ fontWeight: '800', color: t.disqualified ? '#ff3b30' : 'var(--text-primary)' }}>
                     {t.disqualified ? '0' : t.score} б.
@@ -779,7 +832,8 @@ export default function JudgeConsole() {
                   <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>судить →</div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="toolbar-divider" style={{ width: '100%', margin: '20px 0', height: '1px' }}></div>
