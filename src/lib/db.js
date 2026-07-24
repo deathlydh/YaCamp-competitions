@@ -56,8 +56,25 @@ const INITIAL_STATE = {
   }
 };
 
-const KV_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-const KV_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+let KV_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+let KV_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+
+// Auto-parse standard REDIS_URL from Upstash integration if REST envs are missing
+if ((!KV_URL || !KV_TOKEN) && process.env.REDIS_URL) {
+  try {
+    const redisUrl = process.env.REDIS_URL.trim();
+    // Format: redis://default:token@host:port or rediss://...
+    const match = redisUrl.match(/rediss?:\/\/([^:]+):([^@]+)@([^:]+):(\d+)/);
+    if (match) {
+      const token = match[2];
+      const host = match[3];
+      KV_URL = `https://${host}`;
+      KV_TOKEN = token;
+    }
+  } catch (err) {
+    console.error("Failed to parse REDIS_URL:", err);
+  }
+}
 
 // Local JSON file path. On Vercel, /tmp is writable but ephemeral.
 // Locally, we write directly to the project root directory.
