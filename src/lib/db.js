@@ -85,17 +85,22 @@ const localDbPath = process.env.DASHBOARD_DB_PATH || (isVercel
 
 export async function getDbData() {
   let dbData = null;
+  let readSuccessful = false;
   if (KV_URL && KV_TOKEN) {
     try {
-      const res = await fetch(`${KV_URL}/get/yacamp_scores`, {
+      const cleanUrl = KV_URL.replace(/\/+$/, '');
+      const res = await fetch(`${cleanUrl}/get/yacamp_scores`, {
         headers: { Authorization: `Bearer ${KV_TOKEN}` },
         cache: 'no-store'
       });
       if (res.ok) {
         const json = await res.json();
+        readSuccessful = true;
         if (json.result) {
           dbData = JSON.parse(json.result);
         }
+      } else {
+        console.error("Vercel KV returned non-ok status:", res.status);
       }
     } catch (err) {
       console.error("Failed to read from Vercel KV, falling back to local file:", err);
@@ -114,7 +119,11 @@ export async function getDbData() {
 
   if (!dbData) {
     dbData = INITIAL_STATE;
-    await saveDbData(dbData);
+    // Only save INITIAL_STATE if we are running locally (no KV) OR if we successfully contacted KV and it was indeed empty!
+    // If KV read failed, do NOT save, because we might overwrite existing data!
+    if (!KV_URL || readSuccessful) {
+      await saveDbData(dbData);
+    }
   }
 
   // Schema Migration to avoid crashes on old db schemas
@@ -170,16 +179,35 @@ export async function getDbData() {
 export async function saveDbData(data) {
   if (KV_URL && KV_TOKEN) {
     try {
-      const res = await fetch(`${KV_URL}/set/yacamp_scores`, {
+      const cleanUrl = KV_URL.replace(/\/+$/, '');
+      
+      // Try standard Upstash JSON array command format (works for direct Upstash and Vercel KV)
+      let res = await fetch(cleanUrl, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${KV_TOKEN}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ value: JSON.stringify(data) })
+        body: JSON.stringify(["SET", "yacamp_scores", JSON.stringify(data)])
       });
+
+      // Fallback to Vercel KV specific format if the first request fails
+      if (!res.ok) {
+        console.warn("Standard Upstash POST failed, trying Vercel KV format...");
+        res = await fetch(`${cleanUrl}/set/yacamp_scores`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${KV_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ value: JSON.stringify(data) })
+        });
+      }
+
       if (res.ok) {
         return true;
+      } else {
+        console.error("Failed to write to KV store. Status:", res.status, await res.text());
       }
     } catch (err) {
       console.error("Failed to write to Vercel KV:", err);
