@@ -581,7 +581,7 @@ export default function JudgeConsole() {
       <div className="auth-wall-container">
         <div className="organic-blob w-[400px] h-[400px] bottom-[-100px] right-[-100px]"></div>
         
-        <div className="auth-card" style={{ width: '450px' }}>
+        <div className="auth-card" style={{ maxWidth: '450px' }}>
           <div style={{ fontSize: '32px', marginBottom: '12px' }}>📡</div>
           <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '6px', color: 'var(--text-primary)' }}>
             Выберите полигон судейства

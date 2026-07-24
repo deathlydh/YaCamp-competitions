@@ -179,12 +179,37 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="figma-app">
+    <div className="figma-app has-tabbar">
       {/* Background blobs for IRIT-RTF style */}
       <div className="blob-container">
         <div className="pastel-blob-1"></div>
         <div className="pastel-blob-2"></div>
       </div>
+
+      {/* Mobile bottom tab navigation */}
+      <nav className="mobile-tabbar">
+        <button
+          className={`mobile-tab ${activeView === 'overview' ? 'active' : ''}`}
+          onClick={() => { setActiveView('overview'); setSelectedTeamId(null); }}
+        >
+          <span className="mobile-tab-icon">📊</span>
+          <span>обзор</span>
+        </button>
+        <button
+          className={`mobile-tab ${activeView === 'leaderboard' ? 'active' : ''}`}
+          onClick={() => { setActiveView('leaderboard'); setSelectedTeamId(null); }}
+        >
+          <span className="mobile-tab-icon">⚡</span>
+          <span>таблица</span>
+        </button>
+        <button
+          className={`mobile-tab ${activeView === 'rules' ? 'active' : ''}`}
+          onClick={() => { setActiveView('rules'); setSelectedTeamId(null); }}
+        >
+          <span className="mobile-tab-icon">📜</span>
+          <span>правила</span>
+        </button>
+      </nav>
       {/* Top Toolbar */}
       <header className="figma-toolbar">
         <div className="toolbar-left">
@@ -193,7 +218,7 @@ export default function Dashboard() {
             <span>Yandex Camp 2026</span>
           </div>
           <div className="toolbar-divider"></div>
-          <div style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '500' }}>
+          <div className="toolbar-subtitle" style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: '500' }}>
             Финальная робоэстафета
           </div>
         </div>
@@ -251,9 +276,10 @@ export default function Dashboard() {
         
         {/* Left Sidebar - Pages & Layers */}
         <aside className="figma-sidebar left">
-          <div className="sidebar-header">Навигация</div>
+          <div className="sidebar-header sidebar-nav-only">Навигация</div>
           <div className="sidebar-content">
-            <div 
+            <div className="sidebar-nav-only">
+            <div
               className={`tree-item ${activeView === 'overview' ? 'active' : ''}`}
               onClick={() => { setActiveView('overview'); setSelectedTeamId(null); }}
             >
@@ -273,6 +299,7 @@ export default function Dashboard() {
             >
               <div className="tree-item-icon">📜</div>
               <span>Регламент и правила</span>
+            </div>
             </div>
 
             <div className="sidebar-header" style={{ marginTop: '16px' }}>Альянсы и команды</div>
@@ -349,8 +376,8 @@ export default function Dashboard() {
         </aside>
 
         {/* Center Canvas */}
-        <main className="flex-1 flex flex-col min-w-0 relative h-screen">
-          <div className="flex-1 overflow-y-auto bg-background bg-notebook relative p-6 md:p-10 z-0">
+        <main className="flex-1 flex flex-col min-w-0 relative">
+          <div className="flex-1 overflow-y-auto bg-notebook relative p-4 md:p-10 z-0">
             {/* Organic Blobs */}
             <div className="organic-blob w-[500px] h-[500px] top-[-100px] left-[-100px]"></div>
             <div className="organic-blob w-[400px] h-[400px] bottom-[-50px] right-[10%] animate-[float_25s_infinite_ease-in-out_alternate-reverse]"></div>

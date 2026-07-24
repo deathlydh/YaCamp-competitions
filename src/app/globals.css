@@ -2,6 +2,72 @@
 
 @import "tailwindcss";
 
+/* Self-hosted variable fonts (no external requests) */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/inter-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/inter-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/inter-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/inter-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/montserrat-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/montserrat-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/montserrat-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/montserrat-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 @theme inline {
   --color-brand-blue: #013a72;
   --color-brand-slate: #888888;
@@ -47,7 +113,13 @@ body {
   font-size: 13px;
   overflow: hidden;
   height: 100vh;
-  width: 100vw;
+  width: 100%;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
 }
 
 /* Material Symbols Icon config */
@@ -81,6 +153,40 @@ body {
 @keyframes float {
   0% { transform: translate(0, 0) scale(1); }
   100% { transform: translate(60px, 40px) scale(1.15); }
+}
+
+/* Decorative pastel blobs (brand accent) */
+.blob-container {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.pastel-blob-1,
+.pastel-blob-2 {
+  position: absolute;
+  background-color: #d2ecfd;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.65;
+  animation: float 20s infinite ease-in-out alternate;
+}
+
+.pastel-blob-1 {
+  width: 420px;
+  height: 420px;
+  top: -120px;
+  right: -100px;
+}
+
+.pastel-blob-2 {
+  width: 340px;
+  height: 340px;
+  bottom: -120px;
+  left: -80px;
+  animation-delay: -8s;
 }
 
 /* Scrollbars */
@@ -167,6 +273,10 @@ body {
   z-index: 5;
   box-shadow: var(--shadow-card);
   flex-shrink: 0;
+}
+
+.figma-sidebar.wide {
+  width: 340px;
 }
 
 .figma-sidebar.left {
@@ -677,7 +787,9 @@ select.figma-input {
 }
 
 .auth-card {
-  width: 380px;
+  width: 100%;
+  max-width: 380px;
+  margin: 0 16px;
   background: var(--bg-panel);
   border: 1px solid var(--border-default);
   border-radius: 16px;
@@ -688,34 +800,199 @@ select.figma-input {
   text-align: center;
 }
 
-/* Mobile responsive styles for /judge mobile dashboard */
-@media (max-width: 768px) {
+/* Mobile responsive styles */
+@media (max-width: 900px) {
   body {
     overflow-y: auto;
+    height: auto;
+    -webkit-overflow-scrolling: touch;
   }
+
+  .figma-app {
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  /* Toolbar: allow wrapping, stopwatches move to a scrollable second row */
+  .figma-toolbar {
+    height: auto;
+    min-height: 56px;
+    flex-wrap: wrap;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .toolbar-left {
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .toolbar-left .toolbar-divider,
+  .toolbar-left .toolbar-subtitle {
+    display: none;
+  }
+
+  .figma-logo-badge {
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .toolbar-center {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .toolbar-right {
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    flex-shrink: 0;
+  }
+
+  .toolbar-right .figma-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+
+  /* Workspace stacks vertically and scrolls with the page */
   .figma-workspace {
     flex-direction: column;
-    overflow-y: auto;
+    overflow: visible;
     height: auto;
+    flex: none;
   }
-  .figma-sidebar {
+
+  .figma-sidebar,
+  .figma-sidebar.wide {
     width: 100%;
     border-right: none;
     border-bottom: 1px solid var(--border-default);
     height: auto;
-    max-height: 350px;
+    max-height: 320px;
   }
+
   .figma-canvas {
-    padding: 16px;
+    padding: 16px 12px 80px;
     gap: 20px;
+    overflow: visible;
   }
+
+  .stitch-card {
+    padding: 16px;
+  }
+
   .polygon-container {
     grid-template-columns: 1fr;
   }
+
+  .leaderboard-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .alliance-hero-score {
+    font-size: 30px;
+  }
+
   .drawer-content {
     width: 100%;
+    max-width: 100vw;
   }
-  .toolbar-center {
+
+  .auth-card {
+    padding: 24px 20px;
+  }
+
+  /* Hide decorative blobs on mobile (perf + less visual noise) */
+  .blob-container,
+  .organic-blob {
+    display: none;
+  }
+
+  .telemetry-console {
+    height: 140px;
+  }
+
+  /* Larger touch targets */
+  .figma-btn {
+    min-height: 36px;
+  }
+
+  .tree-item {
+    padding: 12px 16px;
+  }
+}
+
+@media (max-width: 400px) {
+  .stopwatch-widget {
+    padding: 4px 10px;
+    gap: 6px;
+  }
+
+  .stopwatch-time {
+    font-size: 14px;
+  }
+}
+
+/* Mobile bottom tab bar (main dashboard) */
+.mobile-tabbar {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .mobile-tabbar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 90;
+    background-color: var(--bg-panel);
+    border-top: 1px solid var(--border-default);
+    box-shadow: 0 -4px 16px rgba(1, 58, 114, 0.06);
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    gap: 4px;
+  }
+
+  .mobile-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 4px;
+    border: none;
+    background: transparent;
+    border-radius: 10px;
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+  }
+
+  .mobile-tab.active {
+    color: var(--text-primary);
+    background-color: #ebf3fa;
+  }
+
+  .mobile-tab-icon {
+    font-size: 17px;
+    line-height: 1;
+  }
+
+  .figma-app.has-tabbar {
+    padding-bottom: calc(58px + env(safe-area-inset-bottom));
+  }
+
+  /* Nav lives in the bottom tab bar on mobile */
+  .sidebar-nav-only {
     display: none;
   }
 }
