@@ -1,0 +1,477 @@
+{
+  "alliances": {
+    "A": {
+      "id": "A",
+      "name": "Мега-Альянс А",
+      "color": "#FF3B30",
+      "teams": [
+        {
+          "id": "a1",
+          "name": "AnyMan",
+          "rover": "17",
+          "gfsx": "156",
+          "score": 0,
+          "timeSeconds": 0,
+          "stage1": {
+            "findBall": "failed",
+            "activation": "manual"
+          },
+          "stage2": {
+            "autonomous": false,
+            "enteredZone": false,
+            "collisions1": 0,
+            "catch": false,
+            "returnToStart": false,
+            "collisions2": 0,
+            "returnWithBall": false
+          },
+          "penalties": {
+            "resets": 0
+          }
+        },
+        {
+          "id": "a3",
+          "name": "Груз 67",
+          "rover": "17",
+          "gfsx": "158",
+          "score": 0,
+          "timeSeconds": 0,
+          "stage1": {
+            "findBall": "failed",
+            "activation": "manual"
+          },
+          "stage2": {
+            "autonomous": false,
+            "enteredZone": false,
+            "collisions1": 0,
+            "catch": false,
+            "returnToStart": false,
+            "collisions2": 0,
+            "returnWithBall": false
+          },
+          "penalties": {
+            "resets": 0
+          }
+        },
+        {
+          "id": "a2",
+          "name": "Рифмы и Код",
+          "rover": "82",
+          "gfsx": "156",
+          "score": 0,
+          "timeSeconds": 0,
+          "stage1": {
+            "findBall": "failed",
+            "activation": "manual"
+          },
+          "stage2": {
+            "autonomous": false,
+            "enteredZone": false,
+            "collisions1": 0,
+            "catch": false,
+            "returnToStart": false,
+            "collisions2": 0,
+            "returnWithBall": false
+          },
+          "penalties": {
+            "resets": 0
+          }
+        },
+        {
+          "id": "a4",
+          "name": "Счастливый басист",
+          "rover": "17",
+          "gfsx": "158",
+          "score": 0,
+          "timeSeconds": 0,
+          "stage1": {
+            "findBall": "failed",
+            "activation": "manual"
+          },
+          "stage2": {
+            "autonomous": false,
+            "enteredZone": false,
+            "collisions1": 0,
+            "catch": false,
+            "returnToStart": false,
+            "collisions2": 0,
+            "returnWithBall": false
+          },
+          "penalties": {
+            "resets": 0
+          }
+        },
+        {
+          "id": "a5",
+          "name": "0xb00bs",
+          "rover": "82",
+          "gfsx": "160",
+          "score": 0,
+          "timeSeconds": 0,
+          "stage1": {
+            "findBall": "failed",
+            "activation": "manual"
+          },
+          "stage2": {
+            "autonomous": false,
+            "enteredZone": false,
+            "collisions1": 0,
+            "catch": false,
+            "returnToStart": false,
+            "collisions2": 0,
+            "returnWithBall": false
+          },
+          "penalties": {
+            "resets": 0
+          }
+        },
+        {
+          "id": "a6",
+          "name": "Пухосос",
+          "rover": "92",
+          "gfsx": "160",
+          "score": 0,
+          "timeSeconds": 0,
+          "stage1": {
+            "findBall": "failed",
+            "activation": "manual"
+          },
+          "stage2": {
+            "autonomous": false,
+            "enteredZone": false,
+            "collisions1": 0,
+            "catch": false,
+            "returnToStart": false,
+            "collisions2": 0,
+            "returnWithBall": false
+          },
+          "penalties": {
+            "resets": 0
+          }
+        }
+      ]
+    },
+    "B": {
+      "id": "B",
+      "name": "Мега-Альянс B",
+      "color": "#007AFF",
+      "teams": [
+        {
+          "id": "b1",
+          "name": "Logos",
+          "rover": "48",
+          "gfsx": "155",
+          "score": 0,
+          "timeSeconds": 0,
+          "stage1": {
+            "findBall": "failed",
+            "activation": "manual"
+          },
+          "stage2": {
+            "autonomous": false,
+            "enteredZone": false,
+            "collisions1": 0,
+            "catch": false,
+            "returnToStart": false,
+            "collisions2": 0,
+            "returnWithBall": false
+          },
+          "penalties": {
+            "resets": 0
+          }
+        },
+        {
+          "id": "b2",
+          "name": "Честь Урала",
+          "rover": "48",
+          "gfsx": "154",
+          "score": 0,
+          "timeSeconds": 0,
+          "stage1": {
+            "findBall": "failed",
+            "activation": "manual"
+          },
+          "stage2": {
+            "autonomous": false,
+            "enteredZone": false,
+            "collisions1": 0,
+            "catch": false,
+            "returnToStart": false,
+            "collisions2": 0,
+            "returnWithBall": false
+          },
+          "penalties": {
+            "resets": 0
+          }
+        },
+        {
+          "id": "b3",
+          "name": "Ramson",
+          "rover": "39",
+          "gfsx": "154",
+          "score": 0,
+          "timeSeconds": 0,
+          "stage1": {
+            "findBall": "failed",
+            "activation": "manual"
+          },
+          "stage2": {
+            "autonomous": false,
+            "enteredZone": false,
+            "collisions1": 0,
+            "catch": false,
+            "returnToStart": false,
+            "collisions2": 0,
+            "returnWithBall": false
+          },
+          "penalties": {
+            "resets": 0
+          }
+        },
+        {
+          "id": "b4",
+          "name": "Введите имя",
+          "rover": "39",
+          "gfsx": "155",
+          "score": 0,
+          "timeSeconds": 0,
+          "stage1": {
+            "findBall": "failed",
+            "activation": "manual"
+          },
+          "stage2": {
+            "autonomous": false,
+            "enteredZone": false,
+            "collisions1": 0,
+            "catch": false,
+            "returnToStart": false,
+            "collisions2": 0,
+            "returnWithBall": false
+          },
+          "penalties": {
+            "resets": 0
+          }
+        },
+        {
+          "id": "b5",
+          "name": "Свердловская клавиатура",
+          "rover": "44",
+          "gfsx": "152",
+          "score": 0,
+          "timeSeconds": 0,
+          "stage1": {
+            "findBall": "failed",
+            "activation": "manual"
+          },
+          "stage2": {
+            "autonomous": false,
+            "enteredZone": false,
+            "collisions1": 0,
+            "catch": false,
+            "returnToStart": false,
+            "collisions2": 0,
+            "returnWithBall": false
+          },
+          "penalties": {
+            "resets": 0
+          }
+        },
+        {
+          "id": "b6",
+          "name": "The Boys",
+          "rover": "44",
+          "gfsx": "152",
+          "score": 0,
+          "timeSeconds": 0,
+          "stage1": {
+            "findBall": "failed",
+            "activation": "manual"
+          },
+          "stage2": {
+            "autonomous": false,
+            "enteredZone": false,
+            "collisions1": 0,
+            "catch": false,
+            "returnToStart": false,
+            "collisions2": 0,
+            "returnWithBall": false
+          },
+          "penalties": {
+            "resets": 0
+          }
+        }
+      ]
+    },
+    "C": {
+      "id": "C",
+      "name": "Мега-Альянс C",
+      "color": "#FFCC00",
+      "teams": [
+        {
+          "id": "c1",
+          "name": "Аргентина Ямайка 5:0",
+          "rover": "83",
+          "gfsx": "157",
+          "score": 0,
+          "timeSeconds": 0,
+          "stage1": {
+            "findBall": "failed",
+            "activation": "manual"
+          },
+          "stage2": {
+            "autonomous": false,
+            "enteredZone": false,
+            "collisions1": 0,
+            "catch": false,
+            "returnToStart": false,
+            "collisions2": 0,
+            "returnWithBall": false
+          },
+          "penalties": {
+            "resets": 0
+          }
+        },
+        {
+          "id": "c2",
+          "name": "Генеральские котлы",
+          "rover": "1",
+          "gfsx": "153",
+          "score": 0,
+          "timeSeconds": 0,
+          "stage1": {
+            "findBall": "failed",
+            "activation": "manual"
+          },
+          "stage2": {
+            "autonomous": false,
+            "enteredZone": false,
+            "collisions1": 0,
+            "catch": false,
+            "returnToStart": false,
+            "collisions2": 0,
+            "returnWithBall": false
+          },
+          "penalties": {
+            "resets": 0
+          }
+        },
+        {
+          "id": "c3",
+          "name": "киберболоид",
+          "rover": "83",
+          "gfsx": "151",
+          "score": 0,
+          "timeSeconds": 0,
+          "stage1": {
+            "findBall": "failed",
+            "activation": "manual"
+          },
+          "stage2": {
+            "autonomous": false,
+            "enteredZone": false,
+            "collisions1": 0,
+            "catch": false,
+            "returnToStart": false,
+            "collisions2": 0,
+            "returnWithBall": false
+          },
+          "penalties": {
+            "resets": 0
+          }
+        },
+        {
+          "id": "c4",
+          "name": "Преобразование Фурей",
+          "rover": "36",
+          "gfsx": "151",
+          "score": 0,
+          "timeSeconds": 0,
+          "stage1": {
+            "findBall": "failed",
+            "activation": "manual"
+          },
+          "stage2": {
+            "autonomous": false,
+            "enteredZone": false,
+            "collisions1": 0,
+            "catch": false,
+            "returnToStart": false,
+            "collisions2": 0,
+            "returnWithBall": false
+          },
+          "penalties": {
+            "resets": 0
+          }
+        },
+        {
+          "id": "c5",
+          "name": "Optimus Prime",
+          "rover": "36",
+          "gfsx": "157",
+          "score": 0,
+          "timeSeconds": 0,
+          "stage1": {
+            "findBall": "failed",
+            "activation": "manual"
+          },
+          "stage2": {
+            "autonomous": false,
+            "enteredZone": false,
+            "collisions1": 0,
+            "catch": false,
+            "returnToStart": false,
+            "collisions2": 0,
+            "returnWithBall": false
+          },
+          "penalties": {
+            "resets": 0
+          }
+        },
+        {
+          "id": "c6",
+          "name": "Гусеничные",
+          "rover": "37",
+          "gfsx": "153",
+          "score": 0,
+          "timeSeconds": 0,
+          "stage1": {
+            "findBall": "failed",
+            "activation": "manual"
+          },
+          "stage2": {
+            "autonomous": false,
+            "enteredZone": false,
+            "collisions1": 0,
+            "catch": false,
+            "returnToStart": false,
+            "collisions2": 0,
+            "returnWithBall": false
+          },
+          "penalties": {
+            "resets": 0
+          }
+        }
+      ]
+    }
+  },
+  "activeRuns": {
+    "A": {
+      "teamId": null,
+      "startTime": null,
+      "isRunning": false,
+      "elapsedSeconds": 0
+    },
+    "B": {
+      "teamId": null,
+      "startTime": null,
+      "isRunning": false,
+      "elapsedSeconds": 0
+    },
+    "C": {
+      "teamId": null,
+      "startTime": null,
+      "isRunning": false,
+      "elapsedSeconds": 0
+    }
+  }
+}
