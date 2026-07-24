@@ -48,6 +48,11 @@ const INITIAL_STATE = {
     A: { teamId: null, startTime: null, isRunning: false, elapsedSeconds: 0 },
     B: { teamId: null, startTime: null, isRunning: false, elapsedSeconds: 0 },
     C: { teamId: null, startTime: null, isRunning: false, elapsedSeconds: 0 }
+  },
+  teamRuns: {
+    A: {},
+    B: {},
+    C: {}
   }
 };
 
@@ -57,9 +62,9 @@ const KV_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST
 // Local JSON file path. On Vercel, /tmp is writable but ephemeral.
 // Locally, we write directly to the project root directory.
 const isVercel = process.env.VERCEL === '1';
-const localDbPath = isVercel
+const localDbPath = process.env.DASHBOARD_DB_PATH || (isVercel
   ? path.join('/tmp', 'dashboard_db.json')
-  : path.join(process.cwd(), 'dashboard_db.json');
+  : path.join(process.cwd(), 'dashboard_db.json'));
 
 export async function getDbData() {
   let dbData = null;
@@ -116,6 +121,26 @@ export async function getDbData() {
       delete dbData.activeRun;
     }
     needsSave = true;
+  }
+
+  // Each team keeps its own stopwatch. Preserve the old alliance-level timer
+  // as the dashboard's "currently displayed run" and migrate it into teamRuns.
+  if (!dbData.teamRuns) {
+    dbData.teamRuns = { A: {}, B: {}, C: {} };
+    for (const allianceId of ['A', 'B', 'C']) {
+      const run = dbData.activeRuns?.[allianceId];
+      if (run?.teamId) {
+        dbData.teamRuns[allianceId][run.teamId] = { ...run };
+      }
+    }
+    needsSave = true;
+  } else {
+    for (const allianceId of ['A', 'B', 'C']) {
+      if (!dbData.teamRuns[allianceId]) {
+        dbData.teamRuns[allianceId] = {};
+        needsSave = true;
+      }
+    }
   }
   
   if (needsSave) {

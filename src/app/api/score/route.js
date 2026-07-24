@@ -63,25 +63,102 @@ export async function POST(request) {
       alliance.teams[teamIndex] = team;
       dbData.alliances[allianceId] = alliance;
 
-      await saveDbData(dbData);
+      const saved = await saveDbData(dbData);
+      if (!saved) {
+        return NextResponse.json({ error: 'Не удалось сохранить результат в базе данных' }, { status: 500 });
+      }
       return NextResponse.json({ success: true, team });
     } 
+
+    // ==========================================
+    // ACTION: clearTeamResult (Judges and Admins)
+    // ==========================================
+    else if (action === 'clearTeamResult') {
+      if (!allianceId || !teamId) {
+        return NextResponse.json({ error: 'Не хватает обязательных параметров' }, { status: 400 });
+      }
+
+      const alliance = dbData.alliances[allianceId];
+      if (!alliance) {
+        return NextResponse.json({ error: 'Альянс не найден' }, { status: 404 });
+      }
+
+      const team = alliance.teams.find(t => t.id === teamId);
+      if (!team) {
+        return NextResponse.json({ error: 'Команда не найдена' }, { status: 404 });
+      }
+
+      Object.assign(team, {
+        score: 0,
+        timeSeconds: 0,
+        disqualified: false,
+        stage1: { findBall: 'failed', activation: 'manual', skipped: false },
+        stage2: {
+          autonomous: false,
+          enteredZone: false,
+          collisions1: 0,
+          catch: false,
+          returnToStart: false,
+          collisions2: 0,
+          returnWithBall: false,
+          skipped: false
+        },
+        penalties: { resets: 0 }
+      });
+
+      if (dbData.teamRuns?.[allianceId]) {
+        delete dbData.teamRuns[allianceId][teamId];
+      }
+
+      if (dbData.activeRuns?.[allianceId]?.teamId === teamId) {
+        dbData.activeRuns[allianceId] = {
+          teamId: null,
+          startTime: null,
+          isRunning: false,
+          elapsedSeconds: 0
+        };
+      }
+
+      const saved = await saveDbData(dbData);
+      if (!saved) {
+        return NextResponse.json({ error: 'Не удалось удалить результат из базы данных' }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true, team });
+    }
     
     // ==========================================
     // ACTION: updateActiveRun (Judges and Admins)
     // ==========================================
     else if (action === 'updateActiveRun') {
-      if (!allianceId || !activeRun) {
-        return NextResponse.json({ error: 'Не хватает обязательных параметров (allianceId, activeRun)' }, { status: 400 });
+      const runTeamId = teamId || activeRun?.teamId;
+      if (!allianceId || !runTeamId || !activeRun) {
+        return NextResponse.json({ error: 'Не хватает обязательных параметров (allianceId, teamId, activeRun)' }, { status: 400 });
       }
-      
+
       if (!dbData.activeRuns) {
         dbData.activeRuns = {};
       }
-      
+      if (!dbData.teamRuns) {
+        dbData.teamRuns = { A: {}, B: {}, C: {} };
+      }
+      if (!dbData.teamRuns[allianceId]) {
+        dbData.teamRuns[allianceId] = {};
+      }
+
+      const teamExists = dbData.alliances?.[allianceId]?.teams.some(t => t.id === runTeamId);
+      if (!teamExists) {
+        return NextResponse.json({ error: 'Команда не найдена' }, { status: 404 });
+      }
+
+      const teamRun = { ...activeRun, teamId: runTeamId };
+      dbData.teamRuns[allianceId][runTeamId] = teamRun;
       dbData.activeRuns[allianceId] = activeRun;
-      await saveDbData(dbData);
-      return NextResponse.json({ success: true, activeRun: dbData.activeRuns[allianceId] });
+      const saved = await saveDbData(dbData);
+      if (!saved) {
+        return NextResponse.json({ error: 'Не удалось сохранить таймер в базе данных' }, { status: 500 });
+      }
+      return NextResponse.json({ success: true, activeRun: teamRun });
     } 
     
     // ==========================================
@@ -257,6 +334,11 @@ export async function POST(request) {
           A: { teamId: null, startTime: null, isRunning: false, elapsedSeconds: 0 },
           B: { teamId: null, startTime: null, isRunning: false, elapsedSeconds: 0 },
           C: { teamId: null, startTime: null, isRunning: false, elapsedSeconds: 0 }
+        },
+        teamRuns: {
+          A: {},
+          B: {},
+          C: {}
         }
       };
       
